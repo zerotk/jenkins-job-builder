@@ -47,6 +47,34 @@ COLUMN_DICT = {
     'last-duration': 'hudson.views.LastDurationColumn',
     'build-button': 'hudson.views.BuildButtonColumn',
     'last-stable': 'hudson.views.LastStableColumn',
+    'configure-project': dict(
+        tag='jenkins.plugins.extracolumns.ConfigureProjectColumn',
+        attrib=dict(plugin='extra-columns@1.18'),
+    ),
+    'last-build-console': dict(
+        tag='jenkins.plugins.extracolumns.LastBuildConsoleColumn',
+        attrib=dict(plugin='extra-columns@1.18'),
+    ),
+    'job-name-color': dict(
+        tag='com.robestone.hudson.compactcolumns.JobNameColorColumn',
+        attrib=dict(plugin='compact-columns@1.10'),
+        elements=dict(colorblindHint='nohint', showColor='false', showDescription='false', showLastBuild='false')
+    ),
+    'test-result': dict(
+        tag='jenkins.plugins.extracolumns.TestResultColumn',
+        attrib=dict(plugin='extra-columns@1.18'),
+        elements=dict(testResultFormat='1')
+    ),
+    'coverage': dict(
+        tag='hudson.plugins.cobertura.CoverageColumn',
+        attrib=dict(plugin='cobertura@1.9.8'),
+        elements=dict(type='both')
+    ),
+    'all-statuses': dict(
+        tag='com.robestone.hudson.compactcolumns.AllStatusesColumn',
+        attrib=dict(plugin='compact-columns@1.10'),
+        elements=dict(colorblindHint='nohint', timeAgoTypeString='DIFF', onlyShowLastStatus='false', hideDays=0)
+    ),
 }
 
 
@@ -84,7 +112,14 @@ class List(jenkins_jobs.modules.base.Base):
         columns = data.get('columns', [])
         for column in columns:
             if column in COLUMN_DICT:
-                XML.SubElement(c_xml, COLUMN_DICT[column])
+                column_tag, column_attrib, column_elements = COLUMN_DICT[column], {}, {}
+                if isinstance(column_tag, dict):
+                    column_attrib = column_tag.get('attrib', {})
+                    column_elements = column_tag.get('elements', {})
+                    column_tag = column_tag['tag']
+                column_xml = XML.SubElement(c_xml, column_tag, attrib=column_attrib)
+                for i_sub_tag_name, i_sub_tag_value in column_elements.items():
+                    XML.SubElement(column_xml, i_sub_tag_name).text = str(i_sub_tag_value)
 
         regex = data.get('regex', None)
         if regex is not None:
